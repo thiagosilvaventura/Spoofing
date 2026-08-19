@@ -1,0 +1,152 @@
+/**
+ * -----------------------------------------------------------------------------
+ * ANTI-DETECT VISUAL SIMULATOR (EDUCATIONAL USE ONLY)
+ * -----------------------------------------------------------------------------
+ * This script simulates the behavior of Anti-Detect browsers (like Multilogin)
+ * by rotating spoofed fingerprint data every 10 seconds.
+ * 
+ * NOTE: This is a UI simulation. It does NOT actively hook browser APIs.
+ * Bypasses TrustedHTML using native textContent assignments.
+ * -----------------------------------------------------------------------------
+ */
+
+(function runAntiDetectSimulator() {
+    // 1. Clean up existing panels
+    const existingPanel = document.getElementById('ad-simulator-panel');
+    if (existingPanel) existingPanel.remove();
+
+    // 2. Create the Simulator Panel
+    const panel = document.createElement('div');
+    panel.id = 'ad-simulator-panel';
+    panel.style.cssText = `
+        position: fixed; top: 20px; right: 20px; width: 450px;
+        background: rgba(20, 10, 10, 0.95); backdrop-filter: blur(10px);
+        border: 2px solid #ef4444; border-radius: 8px; z-index: 2147483647; padding: 20px;
+        color: #e2e8f0; font-family: system-ui, sans-serif; box-shadow: 0 15px 40px rgba(239,68,68,0.4);
+    `;
+
+    const header = document.createElement('div');
+    header.style.cssText = 'display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(239, 68, 68, 0.3); padding-bottom: 10px; margin-bottom: 15px;';
+    
+    const title = document.createElement('h2');
+    title.style.cssText = 'margin: 0; color: #ef4444; font-size: 16px; text-transform: uppercase; font-weight: 900;';
+    // Using textContent to bypass TrustedHTML block
+    title.textContent = '🎭 Anti-Detect Spawning Simulator';
+    
+    const closeBtn = document.createElement('span');
+    closeBtn.style.cssText = 'cursor: pointer; color: #ef4444; font-weight: bold; font-size: 16px;';
+    closeBtn.textContent = '✖';
+    closeBtn.onclick = () => { clearInterval(rotationInterval); panel.remove(); };
+
+    header.appendChild(title);
+    header.appendChild(closeBtn);
+    panel.appendChild(header);
+
+    // Countdown Timer UI
+    const timerDiv = document.createElement('div');
+    timerDiv.style.cssText = 'font-size: 11px; color: #fbbf24; text-align: right; margin-bottom: 10px; font-weight: bold;';
+    timerDiv.id = 'sim-timer';
+    timerDiv.textContent = 'Next rotation in: 10s';
+    panel.appendChild(timerDiv);
+
+    const addDataRow = (labelText, valueId) => {
+        const row = document.createElement('div');
+        row.style.cssText = 'margin-bottom: 12px; background: rgba(0,0,0,0.5); padding: 8px; border-radius: 4px; border-left: 3px solid #ef4444;';
+        
+        const label = document.createElement('div');
+        label.style.cssText = 'font-size: 10px; color: #94a3b8; text-transform: uppercase; font-weight: bold; margin-bottom: 4px;';
+        label.textContent = labelText;
+        
+        const valueBox = document.createElement('div');
+        valueBox.id = valueId;
+        valueBox.style.cssText = 'font-size: 12px; color: #fff; font-family: monospace; word-break: break-all; transition: color 0.3s;';
+        
+        row.appendChild(label);
+        row.appendChild(valueBox);
+        panel.appendChild(row);
+    };
+
+    addDataRow('Canvas Hash (Noise Injected)', 'sim-canvas');
+    addDataRow('WebGL Renderer (Spoofed)', 'sim-webgl');
+    addDataRow('Browser String (Rotated)', 'sim-browser');
+    addDataRow('Input IP & Geo (Proxy Pool)', 'sim-ip');
+    addDataRow('Screen Resolution', 'sim-screen');
+
+    document.body.appendChild(panel);
+
+    // 3. Mock Data Pools for Rotation
+    const spoofedUAs = [
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36",
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_2_1) AppleWebKit/605.1.15 Safari/605.1.15",
+        "Mozilla/5.0 (iPhone; CPU iPhone OS 17_2 like Mac OS X) AppleWebKit/605.1.15",
+        "Mozilla/5.0 (X11; Linux x86_64; rv:121.0) Gecko/20100101 Firefox/121.0"
+    ];
+
+    const spoofedWebGLs = [
+        "ANGLE (NVIDIA, NVIDIA GeForce RTX 3060 Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "Apple GPU",
+        "ANGLE (Intel, Intel(R) Iris(R) Xe Graphics Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "Adreno (TM) 740"
+    ];
+
+    const spoofedIPs = [
+        { ip: "185.16.39.22", geo: "Moscow, RU" },
+        { ip: "45.22.19.100", geo: "New York, US" },
+        { ip: "177.43.12.89", geo: "São Paulo, BR" },
+        { ip: "89.100.50.12", geo: "Berlin, DE" }
+    ];
+
+    const spoofedScreens = ["1920x1080", "2560x1440", "390x844", "1366x768"];
+
+    // Basic Hashing Function for visual simulation
+    const generateHash = (str) => {
+        let h = 0xdeadbeef;
+        for(let i = 0; i < str.length; i++) h = Math.imul(h ^ str.charCodeAt(i), 2654435761);
+        return ((h ^ h >>> 16) >>> 0).toString(16);
+    };
+
+    // 4. Rotation Logic
+    const updateUI = (id, text) => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.textContent = text;
+            // Visual flash effect to highlight changes
+            el.style.color = '#00ff41';
+            setTimeout(() => { if(el) el.style.color = '#fff'; }, 500);
+        }
+    };
+
+    const rotateFingerprint = () => {
+        // A. Canvas Noise Injection Simulation
+        const fakeNoise = Math.random().toString();
+        const fakeCanvasBase = "canvas_data_base_string_" + fakeNoise;
+        updateUI('sim-canvas', generateHash(fakeCanvasBase) + " (Randomized)");
+
+        // B. Pick random items from the spoof pools
+        const randomUa = spoofedUAs[Math.floor(Math.random() * spoofedUAs.length)];
+        const randomWebGL = spoofedWebGLs[Math.floor(Math.random() * spoofedWebGLs.length)];
+        const randomIP = spoofedIPs[Math.floor(Math.random() * spoofedIPs.length)];
+        const randomScreen = spoofedScreens[Math.floor(Math.random() * spoofedScreens.length)];
+
+        updateUI('sim-browser', generateHash(randomUa) + ` [${randomUa.substring(0,40)}...]`);
+        updateUI('sim-webgl', randomWebGL);
+        updateUI('sim-ip', `${randomIP.ip} (${randomIP.geo})`);
+        updateUI('sim-screen', randomScreen);
+    };
+
+    // 5. Start the Loop
+    rotateFingerprint(); // Initial run
+
+    let secondsLeft = 10;
+    const timerEl = document.getElementById('sim-timer');
+    
+    const rotationInterval = setInterval(() => {
+        secondsLeft--;
+        if (secondsLeft <= 0) {
+            rotateFingerprint();
+            secondsLeft = 10;
+        }
+        if(timerEl) timerEl.textContent = `Next rotation in: ${secondsLeft}s`;
+    }, 1000);
+
+})();
